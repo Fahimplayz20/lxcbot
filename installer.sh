@@ -1,361 +1,353 @@
 #!/bin/bash
 
 # ═══════════════════════════════════════════════════════════════
-#   FAHIM'S LXC BOT AUTO INSTALLER  v3.0
-#   GitHub : github.com/Fahimplayz20
-#   Made with love by FAHIM
+#   ███████╗ █████╗ ██╗  ██╗██╗███╗   ███╗
+#   ██╔════╝██╔══██╗██║  ██║██║████╗ ████║
+#   █████╗  ███████║███████║██║██╔████╔██║
+#   ██╔══╝  ██╔══██║██╔══██║██║██║╚██╔╝██║
+#   ██║     ██║  ██║██║  ██║██║██║ ╚═╝ ██║
+#   ╚═╝     ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝╚═╝     ╚═╝
+#
+#        LXC BOT AUTO INSTALLER  •  By FAHIM
 # ═══════════════════════════════════════════════════════════════
 
-# Fix locale for proper UTF-8 rendering
-export LANG=C.UTF-8
-export LC_ALL=C.UTF-8
-export TERM=xterm-256color
+set -e
 
-# ─── COLORS ────────────────────────────────────────────────────
-RED='\033[0;31m'
-GREEN='\033[0;32m'
+# ─────────── COLORS ───────────
+RED='\033[1;31m'
+GREEN='\033[1;32m'
 YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-MAGENTA='\033[0;35m'
-CYAN='\033[0;36m'
+BLUE='\033[1;34m'
+MAGENTA='\033[1;35m'
+CYAN='\033[1;36m'
 WHITE='\033[1;37m'
+NC='\033[0m'
 BOLD='\033[1m'
 DIM='\033[2m'
-NC='\033[0m'
+BLINK='\033[5m'
 
-# ─── WATERMARK ─────────────────────────────────────────────────
+# ─────────── WATERMARK (everywhere) ───────────
 WM="${DIM}${MAGENTA}[FAHIM]${NC}"
 
-# ─── BANNER ────────────────────────────────────────────────────
+# ─────────── ASCII BANNER ───────────
 show_banner() {
     clear
     echo -e "${CYAN}"
     cat << "EOF"
-  #############################################################
-  #                                                           #
-  #      #######  ###  #    # ### #     #                    #
-  #      #       #   # #    #  #  ##   ##                    #
-  #      #####   ##### ######  #  # # # #                    #
-  #      #       #   # #    #  #  #  #  #                    #
-  #      #       #   # #    # ### #     #                    #
-  #                                                           #
-  #             >>>  LXC BOT AUTO INSTALLER  <<<              #
-  #                                                           #
-  #############################################################
+   ███████╗ █████╗ ██╗  ██╗██╗███╗   ███╗
+   ██╔════╝██╔══██╗██║  ██║██║████╗ ████║
+   █████╗  ███████║███████║██║██╔████╔██║
+   ██╔══╝  ██╔══██║██╔══██║██║██║╚██╔╝██║
+   ██║     ██║  ██║██║  ██║██║██║ ╚═╝ ██║
+   ╚═╝     ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝╚═╝     ╚═╝
 EOF
     echo -e "${NC}"
-    echo -e "${YELLOW}                Powered by ${BOLD}FAHIM${NC}${YELLOW}${NC}"
+    echo -e "${MAGENTA}${BOLD}        ⚡  LXC BOT AUTO INSTALLER  ⚡${NC}"
+    echo -e "${YELLOW}${BOLD}             Crafted with ❤  By FAHIM${NC}"
+    echo -e "${CYAN}═══════════════════════════════════════════════════════════════${NC}"
     echo ""
-    sleep 1
 }
 
-# ─── SPINNER ───────────────────────────────────────────────────
+# ─────────── TYPEWRITER EFFECT ───────────
+typewriter() {
+    local text="$1"
+    local delay="${2:-0.02}"
+    for (( i=0; i<${#text}; i++ )); do
+        echo -ne "${text:$i:1}"
+        sleep "$delay"
+    done
+    echo ""
+}
+
+# ─────────── ANIMATED STEP HEADER ───────────
+step_anim() {
+    local step="$1"
+    local total="$2"
+    local title="$3"
+    echo ""
+    echo -e "${BLUE}${BOLD}┌─────────────────────────────────────────────────────────────┐${NC}"
+    printf "${BLUE}${BOLD}│${NC} ${YELLOW}${BOLD}STEP %s/%s${NC} ${WM} ${WHITE}%s${NC}\n" "$step" "$total" "$title"
+    echo -e "${BLUE}${BOLD}└─────────────────────────────────────────────────────────────┘${NC}"
+    sleep 0.3
+}
+
+# ─────────── SPINNER ───────────
 spinner() {
     local pid=$1
-    local message=$2
-    local spin='|/-\'
+    local msg="$2"
+    local spin='⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'
     local i=0
     while kill -0 "$pid" 2>/dev/null; do
-        i=$(( (i+1) % 4 ))
-        printf "\r${WM} ${CYAN}${spin:$i:1}${NC} ${message}... "
-        sleep 0.15
+        i=$(( (i+1) % ${#spin} ))
+        printf "\r${MAGENTA}%s${NC} ${CYAN}%s${NC} ${WM}" "${spin:$i:1}" "$msg"
+        sleep 0.08
     done
-    printf "\r${WM} ${GREEN}[OK]${NC} ${message}                    \n"
+    printf "\r${GREEN}✔${NC} ${CYAN}%s${NC} ${DIM}(done)${NC} ${WM}\n" "$msg"
 }
 
-# ─── STEP HEADER ───────────────────────────────────────────────
-step() {
-    echo ""
-    echo -e "${MAGENTA}=============================================================${NC}"
-    echo -e "${MAGENTA}|${NC}  ${YELLOW}>>${NC} ${BOLD}${WHITE}$1${NC}"
-    echo -e "${MAGENTA}=============================================================${NC}"
-    echo ""
-}
-
-# ─── MESSAGE HELPERS ───────────────────────────────────────────
-success() { echo -e "${WM} ${GREEN}[OK]${NC} $1"; }
-error()   { echo -e "${WM} ${RED}[X]${NC} $1"; }
-info()    { echo -e "${WM} ${CYAN}[i]${NC} $1"; }
-warn()    { echo -e "${WM} ${YELLOW}[!]${NC} $1"; }
-
-# ─── ROOT CHECK ────────────────────────────────────────────────
-check_root() {
-    if [ "$EUID" -ne 0 ]; then
-        error "Please run this installer as ${BOLD}root${NC}${RED}!"
-        echo -e "${WM} ${YELLOW}Try: ${WHITE}sudo bash installer.sh${NC}"
+# ─────────── RUN CMD WITH SPINNER ───────────
+run_silent() {
+    local msg="$1"
+    shift
+    "$@" > /tmp/fahim_install.log 2>&1 &
+    local pid=$!
+    spinner "$pid" "$msg"
+    wait "$pid"
+    local rc=$?
+    if [ $rc -ne 0 ]; then
+        echo -e "${RED}✘ Failed:${NC} $msg"
+        echo -e "${DIM}--- log ---${NC}"
+        tail -n 20 /tmp/fahim_install.log
         exit 1
     fi
 }
 
-# ─── INTRO ANIMATION ───────────────────────────────────────────
-intro_animation() {
-    echo -ne "${WM} ${CYAN}Initializing installer"
-    for i in 1 2 3; do echo -ne "."; sleep 0.35; done
-    echo -e " ${GREEN}[OK]${NC}"
-    sleep 0.2
+# ─────────── PROGRESS BAR ───────────
+progress_bar() {
+    local label="$1"
+    local duration="${2:-1.5}"
+    local width=40
+    local steps=40
+    echo -ne "${CYAN}${label}${NC} ${WM} ["
+    for (( i=0; i<steps; i++ )); do
+        echo -ne "${GREEN}█${NC}"
+        sleep "$(echo "$duration / $steps" | bc -l)"
+    done
+    echo -e "] ${GREEN}100%${NC}"
+}
 
-    echo -ne "${WM} ${CYAN}Checking privileges"
-    for i in 1 2 3; do echo -ne "."; sleep 0.35; done
-    echo -e " ${GREEN}[OK]${NC}"
-    sleep 0.2
-
-    echo -ne "${WM} ${CYAN}Preparing environment"
-    for i in 1 2 3; do echo -ne "."; sleep 0.35; done
-    echo -e " ${GREEN}[OK]${NC}"
-    sleep 0.3
+# ─────────── PULSING TEXT ───────────
+pulse() {
+    local text="$1"
+    for i in 1 2 3; do
+        echo -ne "\r${MAGENTA}${BOLD}>>> ${text} <<<${NC} ${WM}   "
+        sleep 0.3
+        echo -ne "\r${CYAN}${BOLD}>>> ${text} <<<${NC} ${WM}   "
+        sleep 0.3
+    done
     echo ""
 }
 
-# ═══════════════════════════════════════════════════════════════
-#   MAIN INSTALLATION
-# ═══════════════════════════════════════════════════════════════
-
-show_banner
-check_root
-intro_animation
-
-# ─── STEP 1: Update & Install Git ──────────────────────────────
-step "STEP 1/7 : Installing Git"
-(apt-get update -qq && apt-get install -y -qq git curl wget nano) >/dev/null 2>&1 &
-spinner $! "Installing git, curl, wget, nano"
-success "Base packages installed"
-
-# ─── STEP 2: Clone Repository ──────────────────────────────────
-step "STEP 2/7 : Cloning Repository"
-
-# Change to /root
-cd /root || { error "Cannot cd to /root"; exit 1; }
-
-if [ -d "lxcbot" ]; then
-    warn "Existing lxcbot folder found. Removing..."
-    rm -rf lxcbot
-fi
-
-(git clone https://github.com/Fahimplayz20/lxcbot) >/dev/null 2>&1 &
-spinner $! "Cloning lxcbot from GitHub"
-
-if [ ! -d "lxcbot" ]; then
-    error "Clone failed! Check internet or repo URL."
-    exit 1
-fi
-success "Repository cloned to /root/lxcbot"
-
-cd /root/lxcbot || { error "Cannot enter /root/lxcbot"; exit 1; }
-
-# ─── STEP 3: Install Python & Pip ──────────────────────────────
-step "STEP 3/7 : Installing Python3 & Pip"
-(apt-get install -y -qq python3 python3-pip python3-venv) >/dev/null 2>&1 &
-spinner $! "Installing python3-pip"
-success "Python3 + pip installed"
-
-# ─── STEP 4: Install Python Packages ───────────────────────────
-step "STEP 4/7 : Installing Python Dependencies"
-
-PACKAGES=(
-    "davey"
-    "discord.py"
-    "python-dotenv"
-    "PyNaCl"
-    "paramiko"
-    "flask"
-    "flask-cors"
-)
-
-total=${#PACKAGES[@]}
-current=0
-
-for pkg in "${PACKAGES[@]}"; do
-    current=$((current + 1))
-    echo -e "${WM} ${CYAN}[${current}/${total}]${NC} Installing ${BOLD}${YELLOW}${pkg}${NC}"
-    (pip install "$pkg" --break-system-packages --ignore-installed -q) >/dev/null 2>&1 &
-    spinner $! "pip install $pkg"
-done
-
-success "All ${total} packages installed"
-
-# ─── STEP 5: Setup .env file ───────────────────────────────────
-step "STEP 5/7 : Setting up .env Configuration"
-
-# Copy test.env if exists
-if [ -f "test.env" ]; then
-    cp test.env .env
-    success "Copied test.env -> .env"
-else
-    warn "test.env not found. Creating new .env file"
-    touch .env
-fi
-
-echo ""
-echo -e "${MAGENTA}=============================================================${NC}"
-echo -e "${MAGENTA}|${NC}       ${BOLD}${WHITE}ENVIRONMENT CONFIGURATION${NC}"
-echo -e "${MAGENTA}=============================================================${NC}"
-echo ""
-info "Press ${BOLD}ENTER${NC} to skip any variable you don't want to set."
-info "Secrets will be hidden while typing."
-echo ""
-
-# Clear old .env (start fresh)
-> .env
-
-# ─── ASK VAR FUNCTION (fixed - no color inside read) ───────────
-ask_var() {
-    local varname="$1"
-    local description="$2"
-    local is_secret="$3"
-
-    echo ""
-    echo -e "${WM} ${CYAN}>>${NC} ${BOLD}${varname}${NC} ${DIM}(${description})${NC}"
-
-    if [ "$is_secret" = "secret" ]; then
-        read -rsp "   Enter value: " value
-        echo ""
-    else
-        read -rp  "   Enter value: " value
-    fi
-
-    if [ -n "$value" ]; then
-        echo "${varname}=${value}" >> .env
-        success "  ${varname} saved"
-    else
-        warn "  ${varname} skipped"
+# ─────────── ROOT CHECK ───────────
+check_root() {
+    if [ "$EUID" -ne 0 ]; then
+        echo -e "${RED}${BOLD}✘ Please run as root (sudo bash installer.sh)${NC} ${WM}"
+        exit 1
     fi
 }
 
-# ─── DISCORD / BOT CONFIG ──────────────────────────────────────
-echo -e "${CYAN}--- Discord Bot Configuration ---${NC}"
-ask_var "DISCORD_BOT_TOKEN" "Your Discord bot token" "secret"
-ask_var "DISCORD_GUILD_ID"  "Your Discord server/guild ID"
-ask_var "DISCORD_PREFIX"    "Bot command prefix (e.g. !)"
-ask_var "ADMIN_USER_ID"     "Admin Discord user ID"
+# ─────────── INTRO ───────────
+intro() {
+    show_banner
+    typewriter "  Initializing installer for FAHIM's LXC Bot..." 0.015
+    echo ""
+    pulse "GET READY"
+    sleep 0.5
+}
 
-echo ""
-echo -e "${CYAN}--- VPS / SSH Configuration ---${NC}"
-ask_var "VPS_HOST"          "VPS host/IP"
-ask_var "VPS_USERNAME"      "VPS SSH username"
-ask_var "VPS_PASSWORD"      "VPS SSH password" "secret"
-ask_var "VPS_PORT"          "VPS SSH port (default 22)"
+# ─────────── MAIN INSTALL ───────────
+main() {
+    check_root
+    intro
 
-echo ""
-echo -e "${CYAN}--- Optional API Config ---${NC}"
-ask_var "API_KEY"           "Your API key if any" "secret"
+    TOTAL=9
 
-echo ""
-echo -e "${MAGENTA}=============================================================${NC}"
-success ".env file created at /root/lxcbot/.env"
-info "Edit later with: ${WHITE}nano /root/lxcbot/.env${NC}"
-sleep 1
+    # STEP 1 - Update apt
+    step_anim 1 $TOTAL "Updating apt package index"
+    run_silent "Updating apt..." apt update -y
 
-# ─── STEP 6: Create systemd service ────────────────────────────
-step "STEP 6/7 : Creating Systemd Service"
-
-# Auto-detect bot.py location
-BOT_PATH=""
-WORK_DIR=""
-
-if [ -f "/root/lxcbot/bot.py" ]; then
-    BOT_PATH="/root/lxcbot/bot.py"
-    WORK_DIR="/root/lxcbot"
-elif [ -f "/root/bot.py" ]; then
-    BOT_PATH="/root/bot.py"
-    WORK_DIR="/root"
-else
-    BOT_PATH=$(find /root/lxcbot -maxdepth 3 -name "bot.py" -type f 2>/dev/null | head -n 1)
-    if [ -n "$BOT_PATH" ]; then
-        WORK_DIR=$(dirname "$BOT_PATH")
+    # STEP 2 - Install git
+    step_anim 2 $TOTAL "Installing Git"
+    if ! command -v git &>/dev/null; then
+        run_silent "Installing git..." apt install git -y
     else
+        echo -e "${GREEN}✔${NC} Git already installed ${WM}"
+    fi
+
+    # STEP 3 - Clone repo
+    step_anim 3 $TOTAL "Cloning LXC Bot repository"
+    cd /root || cd ~
+    if [ -d "lxcbot" ]; then
+        echo -e "${YELLOW}⚠${NC} lxcbot folder exists — pulling latest... ${WM}"
+        cd lxcbot && run_silent "Pulling latest..." git pull || true
+    else
+        run_silent "Cloning https://github.com/Fahimplayz20/lxcbot ..." \
+            git clone https://github.com/Fahimplayz20/lxcbot
+        cd lxcbot
+    fi
+    progress_bar "Repository ready" 1.0
+
+    # STEP 4 - Install pip
+    step_anim 4 $TOTAL "Installing python3-pip"
+    if ! command -v pip3 &>/dev/null; then
+        run_silent "Installing pip3..." apt install python3-pip -y
+    else
+        echo -e "${GREEN}✔${NC} pip3 already installed ${WM}"
+    fi
+
+    # STEP 5 - Install Python packages
+    step_anim 5 $TOTAL "Installing Python dependencies"
+
+    PIP_PKGS=(
+        "davey"
+        "discord"
+        "dotenv"
+        "PyNaCl"
+        "paramiko"
+        "flask"
+        "flask_cors"
+    )
+
+    for pkg in "${PIP_PKGS[@]}"; do
+        run_silent "pip install $pkg" \
+            pip install "$pkg" --break-system-packages --ignore-installed
+    done
+    progress_bar "Python deps installed" 1.0
+
+    # STEP 6 - Setup .env (interactive)
+    step_anim 6 $TOTAL "Configuring .env file"
+    [ -f test.env ] && cp test.env .env && echo -e "${GREEN}✔${NC} Copied test.env → .env ${WM}"
+
+    echo ""
+    echo -e "${CYAN}${BOLD}┌── .env CONFIGURATION ──────────────────────────────────────┐${NC}"
+    echo -e "${CYAN}│${NC} ${DIM}Press ENTER to skip any variable.${NC} ${WM}"
+    echo -e "${CYAN}└────────────────────────────────────────────────────────────┘${NC}"
+
+    ask_env() {
+        local key="$1"
+        local current
+        current=$(grep -E "^${key}=" .env 2>/dev/null | head -n1 | cut -d'=' -f2-)
+        echo -ne "${YELLOW}${BOLD}${key}${NC} ${DIM}[current: ${current:-empty}]${NC} ${WM} → "
+        read -r value
+        if [ -n "$value" ]; then
+            if grep -qE "^${key}=" .env; then
+                sed -i "s|^${key}=.*|${key}=${value}|" .env
+            else
+                echo "${key}=${value}" >> .env
+            fi
+            echo -e "   ${GREEN}✔${NC} ${key} ${GREEN}set${NC} ${WM}"
+        else
+            echo -e "   ${DIM}skipped${NC} ${WM}"
+        fi
+    }
+
+    # Discover keys from test.env (if present) + always prompt for key ones
+    DEFAULT_KEYS=(
+        "DISCORD_BOT_TOKEN"
+        "DISCORD_GUILD_ID"
+        "DISCORD_CATEGORY_ID"
+        "DISCORD_LOG_CHANNEL_ID"
+        "PTERODACTYL_URL"
+        "PTERODACTYL_API_KEY"
+        "PTERODACTYL_CLIENT_KEY"
+        "LXC_HOST"
+        "LXC_USERNAME"
+        "LXC_PASSWORD"
+        "FLASK_PORT"
+        "OWNER_ID"
+    )
+
+    echo ""
+    for k in "${DEFAULT_KEYS[@]}"; do
+        ask_env "$k"
+    done
+
+    echo ""
+    echo -e "${GREEN}${BOLD}✔ .env configuration complete!${NC} ${WM}"
+    sleep 0.7
+
+    # STEP 7 - Locate bot.py
+    step_anim 7 $TOTAL "Locating bot.py"
+    BOT_PATH=""
+    if [ -f "/root/lxcbot/bot.py" ]; then
         BOT_PATH="/root/lxcbot/bot.py"
-        WORK_DIR="/root/lxcbot"
-        warn "bot.py not found. Using default path."
+        WORKDIR="/root/lxcbot"
+    elif [ -f "/root/bot.py" ]; then
+        BOT_PATH="/root/bot.py"
+        WORKDIR="/root"
+    else
+        FOUND=$(find /root -maxdepth 3 -name "bot.py" -type f 2>/dev/null | head -n1)
+        if [ -n "$FOUND" ]; then
+            BOT_PATH="$FOUND"
+            WORKDIR="$(dirname "$FOUND")"
+        fi
     fi
-fi
 
-info "Bot path : ${BOLD}${BOT_PATH}${NC}"
-info "Work dir : ${BOLD}${WORK_DIR}${NC}"
-echo ""
+    if [ -z "$BOT_PATH" ]; then
+        echo -e "${RED}✘ bot.py not found! Please check repo structure.${NC} ${WM}"
+        exit 1
+    fi
+    echo -e "${GREEN}✔${NC} Found bot at: ${CYAN}${BOT_PATH}${NC} ${WM}"
+    echo -e "${GREEN}✔${NC} Working dir:  ${CYAN}${WORKDIR}${NC} ${WM}"
 
-cat > /etc/systemd/system/bot.service << EOF
-# =========================================================
-#   FAHIM LXC BOT SERVICE
-#   Watermark : FAHIM
-#   GitHub    : github.com/Fahimplayz20
-# =========================================================
-
+    # STEP 8 - Create systemd service
+    step_anim 8 $TOTAL "Creating systemd service"
+    cat > /etc/systemd/system/bot.service << EOF
+# ══════════════════════════════════════════════
+#   LXC Bot Service  •  Managed By FAHIM
+# ══════════════════════════════════════════════
 [Unit]
-Description=Fahim LXC Deploy Bot
+Description=Vps Deploy Bot (FAHIM)
 After=network.target
 
 [Service]
-Type=simple
 User=root
-WorkingDirectory=${WORK_DIR}
+WorkingDirectory=${WORKDIR}
 ExecStart=/usr/bin/python3 ${BOT_PATH}
 Restart=always
 RestartSec=5
 Environment=PYTHONUNBUFFERED=1
-StandardOutput=journal
-StandardError=journal
 
 [Install]
 WantedBy=multi-user.target
 EOF
 
-success "Service file created: /etc/systemd/system/bot.service"
+    echo -e "${GREEN}✔${NC} Service file written → /etc/systemd/system/bot.service ${WM}"
 
-# ─── STEP 7: Enable & Start Service ────────────────────────────
-step "STEP 7/7 : Enabling & Starting Service"
+    # STEP 9 - Enable + Start
+    step_anim 9 $TOTAL "Enabling & starting service"
+    run_silent "Reloading systemd..." systemctl daemon-reload
+    run_silent "Enabling bot service..." systemctl enable bot
+    systemctl restart bot
+    sleep 1.5
 
-(systemctl daemon-reload) >/dev/null 2>&1 &
-spinner $! "Reloading systemd daemon"
-
-(systemctl enable bot) >/dev/null 2>&1 &
-spinner $! "Enabling bot service"
-
-(systemctl restart bot) >/dev/null 2>&1 &
-spinner $! "Starting bot service"
-
-sleep 3
-
-# ─── STATUS CHECK ──────────────────────────────────────────────
-echo ""
-if systemctl is-active --quiet bot; then
-    success "Bot service is ${GREEN}${BOLD}RUNNING${NC}"
-else
-    error "Bot service failed to start!"
-    echo -e "${WM} ${YELLOW}Recent logs:${NC}"
-    journalctl -u bot -n 15 --no-pager 2>/dev/null
-fi
-
-# ─── FINAL SUMMARY ─────────────────────────────────────────────
-echo ""
-echo -e "${GREEN}"
-cat << "EOF"
-  #############################################################
-  #                                                           #
-  #        I N S T A L L A T I O N   C O M P L E T E D        #
-  #                                                           #
-  #############################################################
+    # ─────────── FINAL ───────────
+    echo ""
+    echo -e "${MAGENTA}${BOLD}"
+    cat << "EOF"
+   ╔═══════════════════════════════════════════════════════════╗
+   ║                                                           ║
+   ║        ✅   INSTALLATION COMPLETE SUCCESSFULLY   ✅       ║
+   ║                                                           ║
+   ║               ███████╗ █████╗ ██╗  ██╗██╗███╗   ███╗      ║
+   ║               ██╔════╝██╔══██╗██║  ██║██║████╗ ████║      ║
+   ║               █████╗  ███████║███████║██║██╔████╔██║      ║
+   ║               ██╔══╝  ██╔══██║██╔══██║██║██║╚██╔╝██║      ║
+   ║               ██║     ██║  ██║██║  ██║██║██║ ╚═╝ ██║      ║
+   ║               ╚═╝     ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝╚═╝     ╚═╝      ║
+   ║                                                           ║
+   ╚═══════════════════════════════════════════════════════════╝
 EOF
-echo -e "${NC}"
+    echo -e "${NC}"
 
-echo -e "${CYAN}+-----------------------------------------------------------+${NC}"
-echo -e "${CYAN}|${NC}  ${BOLD}${WHITE}USEFUL COMMANDS${NC}"
-echo -e "${CYAN}+-----------------------------------------------------------+${NC}"
-echo -e "${CYAN}|${NC}  ${YELLOW}>>${NC} Check status  : ${GREEN}systemctl status bot${NC}"
-echo -e "${CYAN}|${NC}  ${YELLOW}>>${NC} View logs     : ${GREEN}journalctl -u bot -f${NC}"
-echo -e "${CYAN}|${NC}  ${YELLOW}>>${NC} Restart bot   : ${GREEN}systemctl restart bot${NC}"
-echo -e "${CYAN}|${NC}  ${YELLOW}>>${NC} Stop bot      : ${GREEN}systemctl stop bot${NC}"
-echo -e "${CYAN}|${NC}  ${YELLOW}>>${NC} Edit .env     : ${GREEN}nano /root/lxcbot/.env${NC}"
-echo -e "${CYAN}+-----------------------------------------------------------+${NC}"
-echo ""
+    pulse "BOT IS RUNNING"
+    sleep 0.5
 
-echo -e "${MAGENTA}+-----------------------------------------------------------+${NC}"
-echo -e "${MAGENTA}|${NC}                                                           ${MAGENTA}|${NC}"
-echo -e "${MAGENTA}|${NC}             ${BOLD}${WHITE}POWERED BY FAHIM${NC}                          ${MAGENTA}|${NC}"
-echo -e "${MAGENTA}|${NC}                                                           ${MAGENTA}|${NC}"
-echo -e "${MAGENTA}|${NC}            ${DIM}github.com/Fahimplayz20${NC}                     ${MAGENTA}|${NC}"
-echo -e "${MAGENTA}|${NC}                                                           ${MAGENTA}|${NC}"
-echo -e "${MAGENTA}+-----------------------------------------------------------+${NC}"
-echo ""
+    echo ""
+    echo -e "${CYAN}${BOLD}📊 Service Status:${NC} ${WM}"
+    systemctl status bot --no-pager -l | head -n 12
 
-echo -e "${GREEN}${BOLD}Setup finished successfully! Enjoy your bot!${NC}"
-echo ""
+    echo ""
+    echo -e "${YELLOW}${BOLD}🛠  USEFUL COMMANDS${NC} ${WM}"
+    echo -e "   ${GREEN}systemctl status bot${NC}   → Check status"
+    echo -e "   ${GREEN}systemctl restart bot${NC}  → Restart bot"
+    echo -e "   ${GREEN}systemctl stop bot${NC}     → Stop bot"
+    echo -e "   ${GREEN}journalctl -u bot -f${NC}   → Live logs"
+    echo ""
+    echo -e "${MAGENTA}${BOLD}        ── Powered by FAHIM ──${NC}"
+    echo -e "${DIM}${MAGENTA}     github.com/Fahimplayz20${NC}"
+    echo ""
+}
+
+# ─────────── RUN ───────────
+main "$@"
